@@ -58,5 +58,18 @@ sudo cgset -r devices.allow='c 1:3 mrw' C
 # Allow reading from /dev/zero
 sudo cgset -r devices.allow='c 1:5 mr' C
 ```
+## Experiment 4
+You can do the same with docker containers
+```bash
+# Create two docker containers
+sudo docker run -itd --name dd1 alpine dd if=/dev/zero of=/dev/null
+sudo docker run -itd --name dd2 alpine dd if=/dev/zero of=/dev/null
 
+# Set dd1 and dd2 to the same cpu
+sudo cgset -r cpuset.cpus=0 system.slice/docker-<container_dd1_id>.scope
+sudo cgset -r cpuset.cpus=0 system.slice/docker-<container_dd2_id>.scope
 
+# Set dd1 to 75% and dd2 to 25% CPU usage
+sudo cgset -r cpu.weight=75 system.slice/docker-<container_dd1_id>.scope
+sudo cgset -r cpu.weight=25 system.slice/docker-<container_dd2_id>.scope
+```
