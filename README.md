@@ -52,23 +52,24 @@ sudo cgcreate -g devices:C
 # Disallow all devices
 sudo cgset -r devices.deny=a C
 
-# Allow writing to /dev/null
+# Allow writing to /dev/null (ls -la /dev/null)
 sudo cgset -r devices.allow='c 1:3 mrw' C
 
-# Allow reading from /dev/zero
+# Allow reading from /dev/zero (ls -la /dev/zero)
 sudo cgset -r devices.allow='c 1:5 mr' C
 ```
-## Experiment 4
+
+# Experiment 4
 You can do the same with docker containers
 ```bash
-# Create two docker containers
-sudo docker run -itd --name dd1 alpine dd if=/dev/zero of=/dev/null
-sudo docker run -itd --name dd2 alpine dd if=/dev/zero of=/dev/null
+# Create two containers that run on the same CPU core and use an equal amount of CPU
+sudo docker run --cpuset-cpus=1 --cpu-shares=1024 -itd --name=dd1 alpine dd if=/dev/zero of=/dev/null
+sudo docker run --cpuset-cpus=1 --cpu-shares=1024 -itd --name=dd2 alpine dd if=/dev/zero of=/dev/null
+```
 
-# Set dd1 and dd2 to the same cpu
-sudo cgset -r cpuset.cpus=0 system.slice/docker-<container_dd1_id>.scope
-sudo cgset -r cpuset.cpus=0 system.slice/docker-<container_dd2_id>.scope
-
+# Experiment 5
+You can even use the cgroup tools to set limits for each container on the fly
+```bash
 # Set dd1 to 75% and dd2 to 25% CPU usage
 sudo cgset -r cpu.weight=75 system.slice/docker-<container_dd1_id>.scope
 sudo cgset -r cpu.weight=25 system.slice/docker-<container_dd2_id>.scope
